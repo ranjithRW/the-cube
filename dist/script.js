@@ -1635,41 +1635,40 @@ class Controls {
 
   }
 
-  scrambleCube() {
+  // MODIFIED METHOD
+  scrambleCube(saveOnComplete = true) {
+		if (this.scramble == null) {
+			this.scramble = this.game.scrambler;
+		}
 
-    if (this.scramble == null) {
+		const converted = this.scramble.converted;
+		if (!converted || converted.length === 0) {
+			if (this.game.state === STATE.Playing) this.game.controls.enable();
+			return;
+		}
+		const move = converted[0];
+		const layer = this.getLayer(move.position);
 
-      this.scramble = this.game.scrambler;
-      this.scramble.callback = (typeof callback !== 'function') ? () => { } : callback;
+		this.flipAxis = new THREE.Vector3();
+		this.flipAxis[move.axis] = 1;
 
-    }
-
-    const converted = this.scramble.converted;
-    const move = converted[0];
-    const layer = this.getLayer(move.position);
-
-    this.flipAxis = new THREE.Vector3();
-    this.flipAxis[move.axis] = 1;
-
-    this.selectLayer(layer);
-    this.rotateLayer(move.angle, true, () => {
-
-      converted.shift();
-
-      if (converted.length > 0) {
-
-        this.scrambleCube();
-
-      } else {
-
-        this.scramble = null;
-        this.game.storage.saveGame();
-
-      }
-
-    });
-
-  }
+		this.selectLayer(layer);
+		this.rotateLayer(move.angle, true, () => {
+			converted.shift();
+			if (converted.length > 0) {
+				this.scrambleCube(saveOnComplete);
+			} else {
+				this.scramble = null;
+				if (saveOnComplete) {
+					this.game.storage.saveGame();
+				}
+				// If we are restarting, re-enable controls right after scramble.
+				if (!saveOnComplete) {
+					this.game.controls.enable();
+				}
+			}
+		});
+	}
 
   getIntersect(position, object, multiple) {
 
@@ -3689,9 +3688,10 @@ const STATE = {
   Theme: 5,
 };
 
+// MODIFIED CONSTANT
 const BUTTONS = {
   Menu: ['stats', 'prefs'],
-  Playing: ['back'],
+  Playing: ['back', 'restart'],
   Complete: [],
   Stats: [],
   Prefs: ['back', 'theme'],
@@ -3706,6 +3706,7 @@ class Game {
 
   constructor() {
 
+    // MODIFIED OBJECT
     this.dom = {
       ui: document.querySelector('.ui'),
       game: document.querySelector('.ui__game'),
@@ -3727,6 +3728,7 @@ class Game {
         stats: document.querySelector('.btn--stats'),
         reset: document.querySelector('.btn--reset'),
         theme: document.querySelector('.btn--theme'),
+        restart: document.querySelector('.btn--restart'),
       },
     };
 
@@ -3769,6 +3771,7 @@ class Game {
 
   }
 
+  // MODIFIED METHOD
   initActions() {
 
     let tappedTwice = false;
@@ -3831,6 +3834,25 @@ class Game {
 
       }
 
+    };
+    
+    // NEW ONCLICK HANDLER
+    this.dom.buttons.restart.onclick = event => {
+      if (this.transition.activeTransitions > 0) return;
+      if (this.state !== STATE.Playing) return;
+
+      this.controls.disable();
+
+      this.timer.stop();
+      this.timer.reset();
+      this.timer.setText();
+
+      this.storage.clearGame();
+      this.newGame = true;
+      this.saved = false;
+
+      this.scrambler.scramble();
+      this.controls.scrambleCube(false); // Scramble without saving state
     };
 
     this.dom.buttons.reset.onclick = event => {
