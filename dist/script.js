@@ -1424,6 +1424,13 @@ class Controls {
 
         this.rotateLayer(delta, false, layer => {
 
+          // THE FIX IS HERE: Save the total snapped angle, not the partial delta.
+          this.game.addMoveToHistory({
+            layer: layer.slice(0),
+            axis: this.flipAxis.clone(),
+            angle: angle, // Changed from `delta` to `angle`
+          });
+
           this.game.storage.saveGame();
 
           this.state = this.gettingDrag ? PREPARING : STILL;
@@ -1613,6 +1620,12 @@ class Controls {
       this.selectLayer(layer);
       this.rotateLayer(move.angle, false, layer => {
 
+        this.game.addMoveToHistory({
+          layer: layer.slice(0),
+          axis: this.flipAxis.clone(),
+          angle: move.angle,
+        });
+
         this.game.storage.saveGame();
         this.state = STILL;
         this.checkIsSolved();
@@ -1635,40 +1648,51 @@ class Controls {
 
   }
 
-  // MODIFIED METHOD
+  performUndo(move) {
+    if (this.state !== STILL) return;
+    this.state = ANIMATING;
+    this.flipAxis = move.axis;
+
+    this.selectLayer(move.layer);
+    this.rotateLayer(-move.angle, false, layer => {
+      this.game.storage.saveGame();
+      this.state = STILL;
+      this.checkIsSolved();
+    });
+  }
+
   scrambleCube(saveOnComplete = true) {
-		if (this.scramble == null) {
-			this.scramble = this.game.scrambler;
-		}
+    if (this.scramble == null) {
+      this.scramble = this.game.scrambler;
+    }
 
-		const converted = this.scramble.converted;
-		if (!converted || converted.length === 0) {
-			if (this.game.state === STATE.Playing) this.game.controls.enable();
-			return;
-		}
-		const move = converted[0];
-		const layer = this.getLayer(move.position);
+    const converted = this.scramble.converted;
+    if (!converted || converted.length === 0) {
+      if (this.game.state === STATE.Playing) this.game.controls.enable();
+      return;
+    }
+    const move = converted[0];
+    const layer = this.getLayer(move.position);
 
-		this.flipAxis = new THREE.Vector3();
-		this.flipAxis[move.axis] = 1;
+    this.flipAxis = new THREE.Vector3();
+    this.flipAxis[move.axis] = 1;
 
-		this.selectLayer(layer);
-		this.rotateLayer(move.angle, true, () => {
-			converted.shift();
-			if (converted.length > 0) {
-				this.scrambleCube(saveOnComplete);
-			} else {
-				this.scramble = null;
-				if (saveOnComplete) {
-					this.game.storage.saveGame();
-				}
-				// If we are restarting, re-enable controls right after scramble.
-				if (!saveOnComplete) {
-					this.game.controls.enable();
-				}
-			}
-		});
-	}
+    this.selectLayer(layer);
+    this.rotateLayer(move.angle, true, () => {
+      converted.shift();
+      if (converted.length > 0) {
+        this.scrambleCube(saveOnComplete);
+      } else {
+        this.scramble = null;
+        if (saveOnComplete) {
+          this.game.storage.saveGame();
+        }
+        if (!saveOnComplete) {
+          this.game.controls.enable();
+        }
+      }
+    });
+  }
 
   getIntersect(position, object, multiple) {
 
@@ -3688,10 +3712,10 @@ const STATE = {
   Theme: 5,
 };
 
-// MODIFIED CONSTANT
+// MODIFIED CONSTANT: Added 'undo'
 const BUTTONS = {
   Menu: ['stats', 'prefs'],
-  Playing: ['back', 'restart'],
+  Playing: ['back', 'restart', 'undo'],
   Complete: [],
   Stats: [],
   Prefs: ['back', 'theme'],
@@ -3706,7 +3730,7 @@ class Game {
 
   constructor() {
 
-    // MODIFIED OBJECT
+    // MODIFIED OBJECT: Added 'undo' button
     this.dom = {
       ui: document.querySelector('.ui'),
       game: document.querySelector('.ui__game'),
@@ -3729,6 +3753,7 @@ class Game {
         reset: document.querySelector('.btn--reset'),
         theme: document.querySelector('.btn--theme'),
         restart: document.querySelector('.btn--restart'),
+        undo: document.querySelector('.btn--undo'),
       },
     };
 
@@ -3750,6 +3775,7 @@ class Game {
     this.state = STATE.Menu;
     this.newGame = false;
     this.saved = false;
+    this.moveHistory = []; // NEW: For undo functionality
 
     this.storage.init();
     this.preferences.init();
@@ -3771,7 +3797,7 @@ class Game {
 
   }
 
-  // MODIFIED METHOD
+  // MODIFIED METHOD: Added undo button handler
   initActions() {
 
     let tappedTwice = false;
@@ -3835,8 +3861,7 @@ class Game {
       }
 
     };
-    
-    // NEW ONCLICK HANDLER
+
     this.dom.buttons.restart.onclick = event => {
       if (this.transition.activeTransitions > 0) return;
       if (this.state !== STATE.Playing) return;
@@ -3852,7 +3877,14 @@ class Game {
       this.saved = false;
 
       this.scrambler.scramble();
-      this.controls.scrambleCube(false); // Scramble without saving state
+      this.controls.scrambleCube(false);
+    };
+
+    // NEW: Onclick handler for the Undo button
+    this.dom.buttons.undo.onclick = event => {
+      if (this.transition.activeTransitions > 0) return;
+      if (this.state !== STATE.Playing) return;
+      this.undoLastMove();
     };
 
     this.dom.buttons.reset.onclick = event => {
@@ -3878,6 +3910,8 @@ class Game {
   game(show) {
 
     if (show) {
+
+      this.moveHistory = []; // NEW: Clear history on new game
 
       if (!this.saved) {
 
@@ -4094,6 +4128,19 @@ class Game {
 
     }
 
+  }
+
+  // NEW: Method to add a move to the history stack
+  addMoveToHistory(move) {
+    this.moveHistory.push(move);
+  }
+
+  // NEW: Method to trigger an undo action
+  undoLastMove() {
+    if (this.transition.activeTransitions > 0 || this.controls.state !== STILL || this.moveHistory.length === 0) return;
+
+    const lastMove = this.moveHistory.pop();
+    this.controls.performUndo(lastMove);
   }
 
 }

@@ -369,3 +369,7 @@ body {
 .ui__buttons {
 	z-index: 5;
 }
+.btn span {
+    margin-left: 0.5em;
+    font-size: 0.9em;
+}
