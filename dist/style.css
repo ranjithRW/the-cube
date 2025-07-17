@@ -66,6 +66,55 @@ body {
 	text-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
 	user-select: none;
 }
+/* Added styles for the new help screen */
+		.ui__help {
+  position: absolute;
+  top: 20%;
+  left: 50%; /* Default for larger screens */
+  width: 80%;
+  max-width: 40rem;
+  transform: translate(-50%, -50%);
+  color: #eb1616;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 5;
+}
+
+/* On small screens (mobile), override the left position */
+@media (max-width: 768px) {
+  .ui__help {
+	
+    left: 30%;
+  }
+}
+
+
+		.ui__help h1 {
+			font-size: 3rem;
+			margin-bottom: 2rem;
+			text-transform: uppercase;
+			letter-spacing: 0.2em;
+		}
+
+		.ui__help p {
+			font-size: 2.5rem;
+			line-height: 1.6;
+			margin-bottom: 1.5rem;
+		}
+
+		.ui__help strong {
+			color: #ff0a91;
+		}
+
+		/* Positioning for the new help button icon */
+.btn--help {
+	  position: absolute; /* or use fixed if you want it to stay on scroll */
+	  top: 1rem;          /* Adjust as needed */
+	  right: 1rem;        /* Adjust as needed */
+	  z-index: 10;
+}
+
 
 .icon {
 	display: inline-block;

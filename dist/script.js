@@ -1939,6 +1939,7 @@ class Transition {
     this.tweens.prefs = [];
     this.tweens.theme = [];
     this.tweens.stats = [];
+    this.tweens.help = [];
 
   }
 
@@ -2158,6 +2159,37 @@ class Transition {
 
     setTimeout(() => this.activeTransitions--, this.durations.stats);
 
+  }
+
+  help(show) {
+    this.activeTransitions++;
+
+    if (this.tweens.help.length) {
+      this.tweens.help[0].stop();
+    }
+
+    const helpContainer = this.game.dom.help;
+    const easing = show ? Easing.Power.Out(2) : Easing.Power.In(3);
+
+    if (show) helpContainer.style.pointerEvents = 'all';
+
+    this.tweens.help[0] = new Tween({
+      duration: 500,
+      easing: easing,
+      onUpdate: tween => {
+        const opacity = show ? tween.value : (1 - tween.value);
+        const translate = show ? (1 - tween.value) : tween.value;
+
+        helpContainer.style.opacity = opacity;
+        helpContainer.style.transform = `translate3d(0, ${translate * 2}em, 0)`;
+      },
+      onComplete: () => {
+        if (!show) helpContainer.style.pointerEvents = 'none';
+      },
+    });
+
+    this.durations.help = 500;
+    setTimeout(() => this.activeTransitions--, this.durations.help);
   }
 
   preferences(show) {
@@ -3691,7 +3723,12 @@ const Icons = new IconsConverter({
     },
     reset: {
       viewbox: '0 0 512 512',
-      content: '<path fill="currentColor" d="M370.72 133.28C339.458 104.008 298.888 87.962 255.848 88c-77.458.068-144.328 53.178-162.791 126.85-1.344 5.363-6.122 9.15-11.651 9.15H24.103c-7.498 0-13.194-6.807-11.807-14.176C33.933 94.924 134.813 8 256 8c66.448 0 126.791 26.136 171.315 68.685L463.03 40.97C478.149 25.851 504 36.559 504 57.941V192c0 13.255-10.745 24-24 24H345.941c-21.382 0-32.09-25.851-16.971-40.971l41.75-41.749zM32 296h134.059c21.382 0 32.09 25.851 16.971 40.971l-41.75 41.75c31.262 29.273 71.835 45.319 114.876 45.28 77.418-.07 144.315-53.144 162.787-126.849 1.344-5.363 6.122-9.15 11.651-9.15h57.304c7.498 0 13.194 6.807 11.807 14.176C478.067 417.076 377.187 504 256 504c-66.448 0-126.791-26.136-171.315-68.685L48.97 471.03C33.851 486.149 8 475.441 8 454.059V320c0-13.255 10.745-24 24-24z" />',
+      content: '<path fill="currentColor" d="M370.72 133.28C339.458 104.008 298.888 87.962 255.848 88c-77.458.068-144.328 53.178-162.791 126.85-1.344 5.363-6.122 9.15-11.651 9.15H24.103c-7.498 0-13.194-6.807-11.807-14.176C33.933 94.924 134.813 8 256 8c66.448 0 126.791 26.136 171.315 68.685L463.03 40.97C478.149 25.851 504 36.559 504 57.941V192c0 13.255-10.745 24-24 24H345.941c-21.382 0-32.09-25.851-16.971-40.971l41.75-41.749zM32 296h134.059c21.382 0 32.09 25.851 16.971 40.971l-41.75 41.75c31.262 29.273 71.835 45.319 114.876 45.28 77.418-.07 144.315-53.144 162.787-126.849 1.344-5.363 6.122-9.15 11.651-9.15h57.304c7.498 0 13.194 6.807 11.807 14.176C478.067 417.076 377.187 504 256 504c-66.448 0-126.791-26.136-171.315-68.685L48.97 471.03C33.851 486.149 8 475.441 8 454.059V320c0-13.255 10.745 24 24-24z" />',
+    },
+    // NEW: Help Icon SVG
+    help: {
+      viewbox: '0 0 512 512',
+      content: '<path fill="currentColor" d="M504 256c0 136.997-111.043 248-248 248S8 392.997 8 256C8 119.083 119.043 8 256 8s248 111.083 248 248zM262.655 90c-54.497 0-98.655 44.158-98.655 98.655 0 8.498 1.152 16.854 3.398 24.938 12.87 47.208 55.087 81.411 105.257 81.411 25.265 0 49.33-9.56 67.95-26.248 11.693-10.457 29.352-8.905 38.892 3.398l1.49 1.86c9.358 11.905 26.89 15.423 41.28 8.411 15.385-7.525 24.433-23.538 21.62-40.435-13.62-81.9-84.42-144.135-168.22-144.135zM256 338c-23.196 0-42 18.804-42 42s18.804 42 42 42 42-18.804 42-42-18.804-42-42-42z"/>'
     },
     trash: {
       viewbox: '0 0 448 512',
@@ -3703,6 +3740,7 @@ const Icons = new IconsConverter({
 
 });
 
+// NEW/MODIFIED CONSTANTS: Added 'Help' state and buttons
 const STATE = {
   Menu: 0,
   Playing: 1,
@@ -3710,16 +3748,17 @@ const STATE = {
   Stats: 3,
   Prefs: 4,
   Theme: 5,
+  Help: 6,
 };
 
-// MODIFIED CONSTANT: Added 'undo'
 const BUTTONS = {
-  Menu: ['stats', 'prefs'],
+  Menu: ['stats', 'prefs', 'help'],
   Playing: ['back', 'restart', 'undo'],
   Complete: [],
   Stats: [],
   Prefs: ['back', 'theme'],
   Theme: ['back', 'reset'],
+  Help: ['back'],
   None: [],
 };
 
@@ -3730,7 +3769,7 @@ class Game {
 
   constructor() {
 
-    // MODIFIED OBJECT: Added 'undo' button
+    // MODIFIED OBJECT: Added 'help' button and UI container
     this.dom = {
       ui: document.querySelector('.ui'),
       game: document.querySelector('.ui__game'),
@@ -3738,6 +3777,7 @@ class Game {
       prefs: document.querySelector('.ui__prefs'),
       theme: document.querySelector('.ui__theme'),
       stats: document.querySelector('.ui__stats'),
+      help: document.querySelector('.ui__help'),
       texts: {
         title: document.querySelector('.text--title'),
         note: document.querySelector('.text--note'),
@@ -3754,6 +3794,7 @@ class Game {
         theme: document.querySelector('.btn--theme'),
         restart: document.querySelector('.btn--restart'),
         undo: document.querySelector('.btn--undo'),
+        help: document.querySelector('.btn--help'),
       },
     };
 
@@ -3797,7 +3838,7 @@ class Game {
 
   }
 
-  // MODIFIED METHOD: Added undo button handler
+  // MODIFIED METHOD: Added help button handler and back button logic for help screen
   initActions() {
 
     let tappedTwice = false;
@@ -3858,6 +3899,10 @@ class Game {
 
         this.theme(HIDE);
 
+      } else if (this.state === STATE.Help) {
+
+        this.help(HIDE);
+
       }
 
     };
@@ -3880,7 +3925,6 @@ class Game {
       this.controls.scrambleCube(false);
     };
 
-    // NEW: Onclick handler for the Undo button
     this.dom.buttons.undo.onclick = event => {
       if (this.transition.activeTransitions > 0) return;
       if (this.state !== STATE.Playing) return;
@@ -3903,6 +3947,8 @@ class Game {
 
     this.dom.buttons.stats.onclick = event => this.stats(SHOW);
 
+    this.dom.buttons.help.onclick = event => this.help(SHOW);
+
     this.controls.onSolved = () => this.complete(SHOW);
 
   }
@@ -3911,7 +3957,7 @@ class Game {
 
     if (show) {
 
-      this.moveHistory = []; // NEW: Clear history on new game
+      this.moveHistory = [];
 
       if (!this.saved) {
 
@@ -4079,6 +4125,37 @@ class Game {
 
   }
 
+  // NEW: Method to show/hide the help screen
+  help(show) {
+
+    if (show) {
+
+      if (this.transition.activeTransitions > 0) return;
+
+      this.state = STATE.Help;
+
+      this.transition.buttons(BUTTONS.Help, BUTTONS.Menu);
+
+      this.transition.title(HIDE);
+      this.transition.cube(HIDE);
+
+      setTimeout(() => this.transition.help(SHOW), 1000);
+
+    } else {
+
+      this.state = STATE.Menu;
+
+      this.transition.buttons(BUTTONS.Menu, BUTTONS.Help);
+
+      this.transition.help(HIDE);
+
+      setTimeout(() => this.transition.cube(SHOW), 500);
+      setTimeout(() => this.transition.title(SHOW), 1200);
+
+    }
+
+  }
+
   complete(show) {
 
     if (show) {
@@ -4130,12 +4207,10 @@ class Game {
 
   }
 
-  // NEW: Method to add a move to the history stack
   addMoveToHistory(move) {
     this.moveHistory.push(move);
   }
 
-  // NEW: Method to trigger an undo action
   undoLastMove() {
     if (this.transition.activeTransitions > 0 || this.controls.state !== STILL || this.moveHistory.length === 0) return;
 

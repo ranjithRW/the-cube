@@ -7,7 +7,7 @@
 	<meta name="viewport"
 		content="width=device-width,height=device-height,user-scalable=no,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0" />
 	<link rel="stylesheet" href="./style.css" />
-
+	
 </head>
 
 <body>
@@ -17,6 +17,26 @@
 		<div class="ui__background"></div>
 
 		<div class="ui__game"></div>
+
+		<!-- NEW: Instructions Screen -->
+		<div class="ui__help">
+			<h1>How to Play</h1>
+			<p>
+				<strong>Rotate the Cube:</strong> Click and drag anywhere on the background to rotate the entire cube.
+			</p>
+			<p>
+				<strong>Rotate a Layer:</strong> Click and drag on a cube piece to rotate its layer. The direction of
+				your
+				drag determines the rotation axis.
+			</p>
+			<p>
+				<strong>Start Game:</strong> Double-tap the cube on the main screen to start a new scrambled game.
+			</p>
+			<p>
+				<strong>Buttons:</strong> Use the buttons to access settings, view stats, shuffle the cube, or undo your
+				last move.
+			</p>
+		</div>
 
 		<div class="ui__texts">
 			<h1 class="text text--title">
@@ -36,7 +56,7 @@
 
 		<div class="ui__prefs">
 			<range name="size" title="Cube Size" list="2,3,4,5,6,7,8,9,10"></range>
-			<range name="flip" title="Flip Type" list="Swift ,Smooth,Bounce"></range>
+			<range name="flip" title="Flip Type" list="Swift ,Smooth,Bounce"></range>
 			<range name="scramble" title="Scramble Length" list="20,25,30"></range>
 			<range name="fov" title="Camera Angle" list="Ortographic,Perspective"></range>
 			<range name="theme" title="Color Scheme" list="Cube,Erno,Dust,Camo,Rain"></range>
@@ -77,19 +97,21 @@
 			<!-- This button resets the THEME colors -->
 			<button class="btn btn--br btn--reset">
 				<icon reset></icon>
-
 			</button>
 			<!-- THIS IS THE NEW BUTTON to restart the GAME -->
 			<button class="btn btn--br btn--restart" style="display: flex; align-items: center; gap: 0.3em;">
 				<icon reset></icon>
 				<span>Shuffle</span>
-
 			</button>
 			<!-- THIS IS THE NEW UNDO BUTTON -->
 			<button class="btn btn--tr btn--undo" style="display: flex; align-items: center; gap: 0.3em;">
 				<icon back></icon>
 				<span>Undo</span>
-
+			</button>
+			<!-- THIS IS THE NEW HELP BUTTON -->
+			<button class="btn btn--tr btn--help" style="display: flex; align-items: center;">
+				<icon help></icon>
+				<span>Help</span>
 			</button>
 		</div>
 	</div>
