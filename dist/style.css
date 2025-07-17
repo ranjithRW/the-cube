@@ -95,6 +95,7 @@ body {
   margin-bottom: 2rem;
   text-transform: uppercase;
   letter-spacing: 0.2em;
+  color: black;
 }
 
 .ui__help p {
