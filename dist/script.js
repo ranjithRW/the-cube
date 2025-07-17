@@ -3945,6 +3945,7 @@ class Game {
       this.timer.setText();
 
       this.storage.clearGame();
+      this.moveHistory = [];
       this.newGame = true;
       this.saved = false;
 
