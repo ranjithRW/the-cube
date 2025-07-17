@@ -3723,7 +3723,7 @@ const Icons = new IconsConverter({
     },
     reset: {
       viewbox: '0 0 512 512',
-      content: '<path fill="currentColor" d="M370.72 133.28C339.458 104.008 298.888 87.962 255.848 88c-77.458.068-144.328 53.178-162.791 126.85-1.344 5.363-6.122 9.15-11.651 9.15H24.103c-7.498 0-13.194-6.807-11.807-14.176C33.933 94.924 134.813 8 256 8c66.448 0 126.791 26.136 171.315 68.685L463.03 40.97C478.149 25.851 504 36.559 504 57.941V192c0 13.255-10.745 24-24 24H345.941c-21.382 0-32.09-25.851-16.971-40.971l41.75-41.749zM32 296h134.059c21.382 0 32.09 25.851 16.971 40.971l-41.75 41.75c31.262 29.273 71.835 45.319 114.876 45.28 77.418-.07 144.315-53.144 162.787-126.849 1.344-5.363 6.122-9.15 11.651-9.15h57.304c7.498 0 13.194 6.807 11.807 14.176C478.067 417.076 377.187 504 256 504c-66.448 0-126.791-26.136-171.315-68.685L48.97 471.03C33.851 486.149 8 475.441 8 454.059V320c0-13.255 10.745 24 24-24z" />',
+      content: '<path fill="currentColor" d="M370.72 133.28C339.458 104.008 298.888 87.962 255.848 88c-77.458.068-144.328 53.178-162.791 126.85-1.344 5.363-6.122 9.15-11.651 9.15H24.103c-7.498 0-13.194-6.807-11.807-14.176C33.933 94.924 134.813 8 256 8c66.448 0 126.791 26.136 171.315 68.685L463.03 40.97C478.149 25.851 504 36.559 504 57.941V192c0 13.255-10.745 24-24 24H345.941c-21.382 0-32.09-25.851-16.971-40.971l41.75-41.749zM32 296h134.059c21.382 0 32.09 25.851 16.971 40.971l-41.75 41.75c31.262 29.273 71.835 45.319 114.876 45.28 77.418-.07 144.315-53.144 162.787-126.849 1.344-5.363 6.122-9.15-11.651-9.15h57.304c7.498 0 13.194 6.807 11.807 14.176C478.067 417.076 377.187 504 256 504c-66.448 0-126.791-26.136-171.315-68.685L48.97 471.03C33.851 486.149 8 475.441 8 454.059V320c0-13.255 10.745 24 24-24z" />',
     },
     // NEW: Help Icon SVG
     help: {
@@ -3740,7 +3740,6 @@ const Icons = new IconsConverter({
 
 });
 
-// NEW/MODIFIED CONSTANTS: Added 'Help' state and buttons
 const STATE = {
   Menu: 0,
   Playing: 1,
@@ -3751,11 +3750,12 @@ const STATE = {
   Help: 6,
 };
 
+// MODIFICATION 1: Defining which buttons show on the Stats screen
 const BUTTONS = {
   Menu: ['stats', 'prefs', 'help'],
   Playing: ['back', 'restart', 'undo'],
   Complete: [],
-  Stats: [],
+  Stats: ['back'], // This now includes the 'back' button
   Prefs: ['back', 'theme'],
   Theme: ['back', 'reset'],
   Help: ['back'],
@@ -3769,7 +3769,6 @@ class Game {
 
   constructor() {
 
-    // MODIFIED OBJECT: Added 'help' button and UI container
     this.dom = {
       ui: document.querySelector('.ui'),
       game: document.querySelector('.ui__game'),
@@ -3816,7 +3815,7 @@ class Game {
     this.state = STATE.Menu;
     this.newGame = false;
     this.saved = false;
-    this.moveHistory = []; // NEW: For undo functionality
+    this.moveHistory = [];
 
     this.storage.init();
     this.preferences.init();
@@ -3838,7 +3837,6 @@ class Game {
 
   }
 
-  // MODIFIED METHOD: Added help button handler and back button logic for help screen
   initActions() {
 
     let tappedTwice = false;
@@ -3883,6 +3881,7 @@ class Game {
 
     };
 
+    // MODIFICATION 2: Adding logic for the back button when on the Stats screen
     this.dom.buttons.back.onclick = event => {
 
       if (this.transition.activeTransitions > 0) return;
@@ -3898,6 +3897,10 @@ class Game {
       } else if (this.state === STATE.Theme) {
 
         this.theme(HIDE);
+
+      } else if (this.state === STATE.Stats) {
+
+        this.stats(HIDE);
 
       } else if (this.state === STATE.Help) {
 
@@ -4113,8 +4116,9 @@ class Game {
     } else {
 
       this.state = STATE.Menu;
-
-      this.transition.buttons(BUTTONS.Menu, BUTTONS.None);
+      
+      // MODIFICATION 3: Hide the Stats buttons (i.e., 'back') when returning to the menu
+      this.transition.buttons(BUTTONS.Menu, BUTTONS.Stats);
 
       this.transition.stats(HIDE);
 
@@ -4125,7 +4129,6 @@ class Game {
 
   }
 
-  // NEW: Method to show/hide the help screen
   help(show) {
 
     if (show) {
@@ -4183,6 +4186,9 @@ class Game {
 
     } else {
 
+      // MODIFICATION 4: Show the 'back' button when moving from the Complete to the Stats screen
+      this.transition.buttons(BUTTONS.Stats, BUTTONS.Complete);
+      
       this.state = STATE.Stats;
       this.saved = false;
 
