@@ -288,7 +288,7 @@ body {
 
 .stats > i {
   display: block;
-  color: rgba(0, 0, 0, 0.5);
+  color: black;
   font-size: 0.9em;
 }
 
