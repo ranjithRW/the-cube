@@ -72,7 +72,7 @@ body {
 .ui__help {
   position: absolute;
   top: 20%;
-  left: 50%; /* Default for larger screens */
+  left: 40%; /* Default for larger screens */
   width: 80%;
   max-width: 40rem;
   transform: translate(-50%, -50%);
