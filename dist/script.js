@@ -1574,7 +1574,7 @@ class Controls {
 
   getLayer(position) {
 
-    const scalar = { 2: 6, 3: 3, 4: 4, 5: 3 }[this.game.cube.size];
+    const scalar = (this.game.cube.size % 2 === 0) ? this.game.cube.size : 3;
     const layer = [];
 
     let axis;
@@ -1822,6 +1822,11 @@ class Scrambler {
       3: [20, 25, 30],
       4: [30, 40, 50],
       5: [40, 60, 80],
+      6: [60, 80, 100],
+      7: [80, 100, 120],
+      8: [100, 120, 140],
+      9: [120, 140, 160],
+      10: [140, 160, 180],
     };
 
     this.moves = [];
@@ -2664,7 +2669,7 @@ class Preferences {
 
       size: new Range('size', {
         value: this.game.cube.size,
-        range: [2, 5],
+        range: [2, 10],
         step: 1,
         onUpdate: value => {
 
@@ -3051,7 +3056,7 @@ class Scores {
   calcStats() {
 
     const s = this.game.cube.sizeGenerated;
-    const data = this.data[s];
+    const data = this.data[s] || { scores: [], solves: 0, best: 0, worst: 0 };
 
     this.setStat('cube-size', `${s}<i>x</i>${s}<i>x</i>${s}`);
     this.setStat('total-solves', data.solves);
@@ -3073,7 +3078,7 @@ class Scores {
 
   getAverage(count) {
 
-    const data = this.data[this.game.cube.sizeGenerated];
+    const data = this.data[this.game.cube.sizeGenerated] || { scores: [] };
 
     if (data.scores.length < count) return 0;
 
@@ -3184,9 +3189,22 @@ class Storage {
 
       const scoresData = JSON.parse(localStorage.getItem('theCube_scores'));
 
-      if (!scoresData) throw new Error();
+      if (!scoresData) { // If no scores, create the structure
+        Object.keys(this.game.scores.data).forEach(size => {
+           if (!this.game.scores.data[size]) {
+             this.game.scores.data[size] = { scores: [], solves: 0, best: 0, worst: 0 };
+           }
+        });
+        throw new Error();
+      };
 
       this.game.scores.data = scoresData;
+      // Ensure all size keys exist
+       for (let i = 2; i <= 10; i++) {
+        if (!this.game.scores.data[i]) {
+          this.game.scores.data[i] = { scores: [], solves: 0, best: 0, worst: 0 };
+        }
+      }
 
     } catch (e) { }
 
@@ -3216,6 +3234,10 @@ class Storage {
       const scoresSolves = parseInt(localStorage.getItem('theCube_scoresSolves'));
 
       if (!scoresData || !scoresBest || !scoresSolves || !scoresWorst) return false;
+      
+      if (!this.game.scores.data[3]) {
+          this.game.scores.data[3] = { scores: [], solves: 0, best: 0, worst: 0 };
+      }
 
       this.game.scores.data[3].scores = scoresData;
       this.game.scores.data[3].best = scoresBest;
@@ -3238,6 +3260,7 @@ class Storage {
       const preferences = JSON.parse(localStorage.getItem('theCube_preferences'));
 
       if (!preferences) throw new Error();
+      if (parseInt(preferences.cubeSize) > 10) preferences.cubeSize = 3; // safety check
 
       this.game.cube.size = parseInt(preferences.cubeSize);
       this.game.controls.flipConfig = parseInt(preferences.flipConfig);
@@ -3740,6 +3763,7 @@ const Icons = new IconsConverter({
 
 });
 
+// NEW/MODIFIED CONSTANTS: Added 'Help' state and buttons
 const STATE = {
   Menu: 0,
   Playing: 1,
@@ -3750,12 +3774,11 @@ const STATE = {
   Help: 6,
 };
 
-// MODIFICATION 1: Defining which buttons show on the Stats screen
 const BUTTONS = {
   Menu: ['stats', 'prefs', 'help'],
   Playing: ['back', 'restart', 'undo'],
   Complete: [],
-  Stats: ['back'], // This now includes the 'back' button
+  Stats: ['back'],
   Prefs: ['back', 'theme'],
   Theme: ['back', 'reset'],
   Help: ['back'],
@@ -3769,6 +3792,7 @@ class Game {
 
   constructor() {
 
+    // MODIFIED OBJECT: Added 'help' button and UI container
     this.dom = {
       ui: document.querySelector('.ui'),
       game: document.querySelector('.ui__game'),
@@ -3815,7 +3839,7 @@ class Game {
     this.state = STATE.Menu;
     this.newGame = false;
     this.saved = false;
-    this.moveHistory = [];
+    this.moveHistory = []; // NEW: For undo functionality
 
     this.storage.init();
     this.preferences.init();
@@ -3837,6 +3861,7 @@ class Game {
 
   }
 
+  // MODIFIED METHOD: Added help button handler and back button logic for help screen
   initActions() {
 
     let tappedTwice = false;
@@ -3881,7 +3906,6 @@ class Game {
 
     };
 
-    // MODIFICATION 2: Adding logic for the back button when on the Stats screen
     this.dom.buttons.back.onclick = event => {
 
       if (this.transition.activeTransitions > 0) return;
@@ -3898,7 +3922,7 @@ class Game {
 
         this.theme(HIDE);
 
-      } else if (this.state === STATE.Stats) {
+      } else if (this.state === STATE.Stats) { 
 
         this.stats(HIDE);
 
@@ -4116,8 +4140,7 @@ class Game {
     } else {
 
       this.state = STATE.Menu;
-      
-      // MODIFICATION 3: Hide the Stats buttons (i.e., 'back') when returning to the menu
+
       this.transition.buttons(BUTTONS.Menu, BUTTONS.Stats);
 
       this.transition.stats(HIDE);
@@ -4129,6 +4152,7 @@ class Game {
 
   }
 
+  // NEW: Method to show/hide the help screen
   help(show) {
 
     if (show) {
@@ -4185,10 +4209,9 @@ class Game {
       }, 1000);
 
     } else {
-
-      // MODIFICATION 4: Show the 'back' button when moving from the Complete to the Stats screen
-      this.transition.buttons(BUTTONS.Stats, BUTTONS.Complete);
       
+      this.transition.buttons(BUTTONS.Stats, BUTTONS.Complete);
+
       this.state = STATE.Stats;
       this.saved = false;
 
